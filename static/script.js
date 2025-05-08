@@ -1,5 +1,5 @@
 // Configuración de la URL base para las peticiones API
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://proyectoestresestudiantil.onrender.com';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Cargar métricas del modelo
