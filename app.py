@@ -16,6 +16,8 @@ import seaborn as sns
 import io
 import base64
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import joblib
+import os
 
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para todas las rutas
@@ -26,6 +28,43 @@ scaler = None
 selector = None
 features = None
 metrics = {}
+
+# Rutas para guardar los modelos
+MODEL_DIR = 'models'
+MODEL_PATH = os.path.join(MODEL_DIR, 'model.joblib')
+SCALER_PATH = os.path.join(MODEL_DIR, 'scaler.joblib')
+SELECTOR_PATH = os.path.join(MODEL_DIR, 'selector.joblib')
+FEATURES_PATH = os.path.join(MODEL_DIR, 'features.joblib')
+
+def save_model_components():
+    """Guarda todos los componentes del modelo usando joblib"""
+    if not os.path.exists(MODEL_DIR):
+        os.makedirs(MODEL_DIR)
+    
+    joblib.dump(model, MODEL_PATH)
+    joblib.dump(scaler, SCALER_PATH)
+    joblib.dump(selector, SELECTOR_PATH)
+    joblib.dump(features, FEATURES_PATH)
+    print("Modelo y componentes guardados exitosamente")
+
+def load_model_components():
+    """Carga todos los componentes del modelo usando joblib"""
+    global model, scaler, selector, features
+    
+    if not all(os.path.exists(path) for path in [MODEL_PATH, SCALER_PATH, SELECTOR_PATH, FEATURES_PATH]):
+        print("No se encontraron archivos del modelo. Se entrenará un nuevo modelo.")
+        return False
+    
+    try:
+        model = joblib.load(MODEL_PATH)
+        scaler = joblib.load(SCALER_PATH)
+        selector = joblib.load(SELECTOR_PATH)
+        features = joblib.load(FEATURES_PATH)
+        print("Modelo y componentes cargados exitosamente")
+        return True
+    except Exception as e:
+        print(f"Error al cargar el modelo: {str(e)}")
+        return False
 
 def cargar_datos(ruta):
     df = pd.read_csv(ruta)
@@ -134,6 +173,17 @@ def get_model_metrics(model, X_test, y_test):
 
 def initialize_model():
     global model, scaler, selector, features, metrics
+    
+    # Intentar cargar el modelo existente
+    if load_model_components():
+        # Si el modelo se cargó exitosamente, calcular las métricas
+        print("Calculando métricas para el modelo cargado...")
+        encuesta = cargar_datos('BD/Evaluacion_Estres_Estudiantil.csv')
+        X, y, _, _, _ = preprocesar_datos(encuesta)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        metrics = get_model_metrics(model, X_test, y_test)
+        return
+    
     print("Cargando y preparando datos...")
     encuesta = cargar_datos('BD/Evaluacion_Estres_Estudiantil.csv')
     X, y, scaler, selector, features = preprocesar_datos(encuesta)
@@ -143,6 +193,9 @@ def initialize_model():
     
     print("Calculando métricas...")
     metrics = get_model_metrics(model, X_test, y_test)
+    
+    # Guardar el modelo y sus componentes
+    save_model_components()
 
 @app.route('/')
 def home():
