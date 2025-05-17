@@ -144,7 +144,10 @@ def get_model_metrics(model, X_test, y_test):
     # Calcular métricas
     accuracy = accuracy_score(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
-    report = classification_report(y_test, y_pred, target_names=["Bajo", "Medio", "Alto"], output_dict=True)
+    report_full = classification_report(y_test, y_pred, target_names=["Bajo", "Medio", "Alto"], output_dict=True)
+    # Filtrar solo precision y recall por clase
+    classes = ["Bajo", "Medio", "Alto"]
+    report = {clase: {"precision": report_full[clase]["precision"], "recall": report_full[clase]["recall"]} for clase in classes}
     
     # Generar matriz de confusión
     conf_matrix = confusion_matrix(y_test, y_pred)

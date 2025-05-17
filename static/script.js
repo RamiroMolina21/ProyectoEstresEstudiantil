@@ -43,8 +43,6 @@ function displayClassificationReport(report) {
             <td>${className}</td>
             <td>${(report[className].precision * 100).toFixed(2)}%</td>
             <td>${(report[className].recall * 100).toFixed(2)}%</td>
-            <td>${(report[className].f1_score * 100).toFixed(2)}%</td>
-            <td>${report[className].support}</td>
         `;
         tbody.appendChild(row);
     });
